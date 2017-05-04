@@ -18,7 +18,7 @@ def weight_variable(shape, name = None, stddev=0.1 ): #shape = [patch_height, pa
     initial = tf.truncated_normal(shape, stddev = stddev, name=name)
     return tf.Variable(initial)
 
-def bias_variable(shape, name = None ,value=0.):
+def bias_variable(shape, name = None ,value=0.0):
     initial = tf.constant(value, shape=shape, name = name)
     return tf.Variable(initial)
 
@@ -46,7 +46,7 @@ def res_unit(input_layer,i,num_kernels=64,act_func='prelu'):
         act_func_ = prelu
     if act_func == 'relu':
         act_func_ = tf.nn.relu
-    with tf.variable_scope("res_unit"+str(i)):
+    with tf.variable_scope("Res_Unit"+str(i)):
         part1 = slim.batch_norm(input_layer,activation_fn=None)
         part2 = act_func_(part1)
         part3 = slim.conv2d(part2,num_kernels,[3,3],activation_fn=None)
@@ -59,7 +59,6 @@ def res_unit(input_layer,i,num_kernels=64,act_func='prelu'):
 def whitening(img):
     #tf.image.per_image_standardization()
     return
-
 
 def fspecial_gauss(size, sigma):
     """Function to mimic the 'fspecial' gaussian MATLAB function
@@ -80,6 +79,8 @@ def fspecial_gauss(size, sigma):
 
 
 def ssim(img1, img2, cs_map=False, mean_metric=True, size=11, sigma=1.5):
+    img1 = tf.image.rgb_to_grayscale(img1)
+    img2 = tf.image.rgb_to_grayscale(img2)
     window = fspecial_gauss(size, sigma) # window shape [size, size]
     K1 = 0.01
     K2 = 0.03
@@ -108,6 +109,8 @@ def ssim(img1, img2, cs_map=False, mean_metric=True, size=11, sigma=1.5):
 
 
 def ms_ssim(img1, img2, mean_metric=True, level=5):
+    img1 = tf.image.rgb_to_grayscale(img1)
+    img2 = tf.image.rgb_to_grayscale(img2)
     weight = tf.constant([0.0448, 0.2856, 0.3001, 0.2363, 0.1333], dtype=tf.float32)
     mssim = []
     mcs = []
@@ -121,8 +124,8 @@ def ms_ssim(img1, img2, mean_metric=True, level=5):
         img2 = filtered_im2
 
     # list to tensor of dim D+1
-    mssim = tf.pack(mssim, axis=0)
-    mcs = tf.pack(mcs, axis=0)
+    mssim = tf.stack(mssim, axis=0)
+    mcs = tf.stack(mcs, axis=0)
 
     value = (tf.reduce_prod(mcs[0:level-1]**weight[0:level-1])*
                             (mssim[level-1]**weight[level-1]))
@@ -160,10 +163,10 @@ def load(sess, saver, model_name, dataset_name):
         print('Not Found: checkpoints')
         return 0
 
-def record(step,model_name, dataset_name,pSNR,SSIM,MS_SSIM,MSE,time_interval):
+def record(step,model_name, dataset_name,pSNR,MS_SSIM,MSE,time_interval):
     with open('Record_'+model_name+'_On_'+dataset_name,'a') as csvfile:
         csvwriter = csv.writer(csvfile,dialect='excel',delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        csvwriter.writerow([str(step),str(pSNR),str(SSIM),str(MS_SSIM),str(MSE),str(time_interval)])
+        csvwriter.writerow([str(step),str(pSNR),str(MS_SSIM),str(MSE),str(time_interval)])
 
 def plot_imagepairs(img_SR,img_HR,num_img =5,num_col=1):
     #plt.figure(figsize=(10,10)) 
