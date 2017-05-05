@@ -108,7 +108,7 @@ def ssim(img1, img2, cs_map=False, mean_metric=True, size=11, sigma=1.5):
     return value
 
 
-def ms_ssim(img1, img2, mean_metric=True, level=5):
+def ms_ssim(img1, img2, mean_metric=True, level=3):
     img1 = tf.image.rgb_to_grayscale(img1)
     img2 = tf.image.rgb_to_grayscale(img2)
     weight = tf.constant([0.0448, 0.2856, 0.3001, 0.2363, 0.1333], dtype=tf.float32)
